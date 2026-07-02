@@ -1,18 +1,21 @@
 # RAC for VS Code / Cursor
 
-Inline validation for [RAC](../../README.md) (requirements-as-code) artifacts,
-powered by the [`@itsthelore/rac-sdk`](../rac-sdk/README.md) thin client.
+Inline validation for [RAC](https://github.com/itsthelore/rac-core)
+(requirements-as-code) artifacts, powered by the
+[`@itsthelore/rac-sdk`](https://www.npmjs.com/package/@itsthelore/rac-sdk)
+thin client.
 
 Open or save a RAC artifact (a Markdown file with `schema_version` frontmatter)
 and validation findings appear as diagnostics — the same findings `rac validate`
 reports on the command line, because the extension runs `rac` rather than
-reimplementing it ([ADR-063](../../rac/decisions/adr-063-non-python-clients-are-thin.md)).
+reimplementing it
+([ADR-063](https://github.com/itsthelore/rac-core/blob/main/rac/decisions/adr-063-non-python-clients-are-thin.md)).
 
 > Status: early (0.1.0).
 
 ## Requirements
 
-- The `rac` CLI installed and discoverable (`pip install requirements-as-code`),
+- The `rac` CLI installed and discoverable (`pip install rac-core`),
   or its path set in `rac.path`.
 
 ## Features
@@ -72,7 +75,7 @@ Content-Security-Policy (no network, no remote code, no eval).
 ## Develop
 
 ```sh
-npm install        # links @itsthelore/rac-sdk from ../rac-sdk (build it first: cd ../rac-sdk && npm run build)
+npm install        # @itsthelore/rac-sdk resolves from npm
 npm run check-types
 npm run compile    # esbuild → dist/extension.js
 ```
@@ -81,6 +84,7 @@ Then press **F5** (Run RAC Extension) to launch an Extension Development Host.
 
 ## Roadmap
 
-Tracked in [`rac/roadmaps/future/typescript-sdk-vscode.md`](../../rac/roadmaps/future/typescript-sdk-vscode.md).
-Next: relationship findings drawn at the reference site (`rac relationships` /
-`rac review`), and completion for artifact IDs.
+Tracked in the RAC corpus:
+[`rac/roadmaps/rac-editors-buildout.md`](https://github.com/itsthelore/rac-core/blob/main/rac/roadmaps/rac-editors-buildout.md)
+(this repository's build-out and first publish), alongside the delivered
+v0.21.x editor series.
