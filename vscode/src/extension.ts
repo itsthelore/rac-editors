@@ -53,6 +53,11 @@ import {
   removeHookSettings,
   renderHookScript,
 } from "./claudeHook";
+import {
+  hardenWebviewHtml,
+  isPathInside,
+  parseExplorerMessage,
+} from "./webviewSecurity";
 
 const DEBOUNCE_MS = 300;
 const RELATIONSHIP_DEBOUNCE_MS = 600;
@@ -567,22 +572,21 @@ async function showExplorer(): Promise<void> {
   await loadExplorer(folder);
 }
 
-// A message from the Explorer webview. Only known types act, and `open-artifact`
-// resolves the id against the cached export — so the path opened is the engine's,
-// never one supplied by the webview, and it is confined to the workspace.
+// A message from the Explorer webview. Only known envelopes act (the parse is
+// pinned by unit tests in webviewSecurity), and `open-artifact` resolves the id
+// against the cached export — so the path opened is the engine's, never one
+// supplied by the webview, and it is confined to the workspace.
 async function handleExplorerMessage(
   folder: vscode.WorkspaceFolder,
   message: unknown,
 ): Promise<void> {
-  if (typeof message !== "object" || message === null) return;
-  const type = (message as { type?: unknown }).type;
-  if (type === "ready") {
+  const parsed = parseExplorerMessage(message);
+  if (parsed.kind === "ready") {
     await revealArtifact(folder, vscode.window.activeTextEditor?.document);
     return;
   }
-  if (type === "open-artifact") {
-    const id = (message as { id?: unknown }).id;
-    if (typeof id === "string") await openArtifactById(folder, id);
+  if (parsed.kind === "open-artifact") {
+    await openArtifactById(folder, parsed.id);
   }
 }
 
@@ -626,8 +630,7 @@ async function revealArtifact(
 }
 
 function isInsideFolder(folder: vscode.WorkspaceFolder, uri: vscode.Uri): boolean {
-  const rel = path.relative(folder.uri.fsPath, uri.fsPath);
-  return rel !== "" && !rel.startsWith("..") && !path.isAbsolute(rel);
+  return isPathInside(folder.uri.fsPath, uri.fsPath);
 }
 
 async function loadExplorer(folder: vscode.WorkspaceFolder): Promise<void> {
@@ -652,32 +655,8 @@ async function loadExplorer(folder: vscode.WorkspaceFolder): Promise<void> {
   }
 }
 
-// A strict Content-Security-Policy for the Explorer webview. The exported Portal
-// is self-contained — inline scripts and styles, data: fonts and images, and no
-// network — so `default-src 'none'` blocks any exfiltration (there is no
-// connect-src). Inline script/style and data: assets keep the offline viewer
-// working; the vendored shell uses no eval/WebAssembly, so 'unsafe-eval' is
-// deliberately not granted. `cspSource` is included so VS Code's own injected
-// webview resources (e.g. the `acquireVsCodeApi` bridge the sync relies on) are
-// permitted. The bridge itself stays origin-checked in handleExplorerMessage
-// (known message types only; opened paths confined to the workspace).
-function explorerCsp(cspSource: string): string {
-  return [
-    "default-src 'none'",
-    `img-src ${cspSource} data:`,
-    `font-src ${cspSource} data:`,
-    `style-src ${cspSource} 'unsafe-inline'`,
-    `script-src ${cspSource} 'unsafe-inline'`,
-  ].join("; ");
-}
-
-function hardenWebviewHtml(html: string, cspSource: string): string {
-  const meta = `<meta http-equiv="Content-Security-Policy" content="${explorerCsp(cspSource)}">`;
-  // Insert the CSP as the first child of <head> so it governs the whole document.
-  return html.includes("<head>")
-    ? html.replace("<head>", `<head>${meta}`)
-    : `${meta}${html}`;
-}
+// The CSP and bridge-envelope hardening live in webviewSecurity.ts, where the
+// battery unit-tests them (v0.21.10 initiative 2).
 
 function explorerMessage(text: string): string {
   return (
