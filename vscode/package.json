@@ -8,11 +8,11 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/itsthelore/rac-core.git",
-    "directory": "typescript/rac-vscode"
+    "url": "https://github.com/itsthelore/rac-editors.git",
+    "directory": "vscode"
   },
   "bugs": {
-    "url": "https://github.com/itsthelore/rac-core/issues"
+    "url": "https://github.com/itsthelore/rac-editors/issues"
   },
   "keywords": [
     "rac",
